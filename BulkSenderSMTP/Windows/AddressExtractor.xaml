@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:BulkSenderSMTP.Windows"
         mc:Ignorable="d"
-        Title="AddressExtractor" Height="500" Width="600">
+        Title="AddressExtractor" Height="500" Width="400">
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="10"/>
@@ -19,10 +19,12 @@
             <ColumnDefinition Width="10"/>
         </Grid.ColumnDefinitions>
         <StackPanel Grid.Row="1" Grid.Column="1" Orientation="Horizontal">
-            <Label Content="Characters:" FontSize="16" VerticalAlignment="Center"/>
-            <ComboBox x:Name="comboBoxChar" Width="100" Height="33" Margin="10,0,20,0"/>
-            <Button Content="Extract" Width="100" Height="33" FontSize="16"/>
+            <Label Content="Delimiter Characters:" FontSize="16" VerticalAlignment="Center"/>
+            <!--<ComboBox x:Name="comboDelimiter" Width="100" Height="33" Margin="10,0,20,0"/>-->
+            <TextBox x:Name="tbStartDelim" Height="25" Width="35" FontSize="15" HorizontalContentAlignment="Center" FontWeight="Bold" Text="&lt;"/>
+            <TextBox x:Name="tbEndDelim" Height="25" Width="35" FontSize="15" HorizontalContentAlignment="Center" FontWeight="Bold" Text="&gt;" Margin="10,0,25,0"/>
+            <Button x:Name="btnExtract" Content="Extract" Width="100" Height="33" FontSize="16" Click="btnExtract_Click"/>
         </StackPanel>
-        <TextBox x:Name="tBRaw" Grid.Row="2" Grid.Column="1" FontSize="14" />
+        <TextBox x:Name="tbRawAddresses" Grid.Row="2" Grid.Column="1" FontSize="14" TextWrapping="Wrap" VerticalScrollBarVisibility="Visible" />
     </Grid>
 </Window>
