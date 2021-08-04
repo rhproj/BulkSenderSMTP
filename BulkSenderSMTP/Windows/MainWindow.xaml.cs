@@ -1,5 +1,7 @@
 ﻿using BulkSenderSMTP.Windows;
+using MailKit.Net.Smtp;
 using Microsoft.Win32;
+using MimeKit;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -48,12 +50,6 @@ namespace BulkSenderSMTP
             {
                 using (var sR = new StreamReader(ofd.FileName))
                 {
-                    //string line;
-                    //while ((line = sR.ReadLine()) != null)
-                    //{
-                    //    listBoxBody.Items.Add(line);
-                    //}
-
                     while (!sR.EndOfStream)
                     {
                         string[] valueLine = sR.ReadLine().Split(';');
@@ -65,22 +61,55 @@ namespace BulkSenderSMTP
                     listVMessage.ItemsSource = messageList;
                 }
             }
+        }
 
+        private void Send_Click(object sender, RoutedEventArgs e)
+        {
+            #region wo-BGw
+            //CheckForIllegalCrossThreadCalls = false;
 
-            //_bodies = listBoxBody.Items.Count;
-            //lblBody.Text = _bodies.ToString();
+            //declare the smtp object
+            SmtpClient client = new SmtpClient();
+            client.Timeout = 300000;
+            client.AuthenticationMechanisms.Remove("XOAUTH2");
 
-            //using (StreamReader streamReader = new StreamReader(path, Encoding.Default))
-            //{
-            //    while (!streamReader.EndOfStream)
-            //    {
-            //        pBoxId++;
-            //        string[] valueLine = streamReader.ReadLine().Split(';');
+            for (int i = 0; i < emailList.Count; i++)
+            {
+                BodyBuilder builder = new BodyBuilder(); //Builds HTML body for sending
+                builder.HtmlBody = messageList[i].ToString();
 
-            //        ipList.Add(valueLine[1]);
-            //    }
-            //    backgroundWorker1.RunWorkerAsync();
-            //}
+                //Define the mail headers
+                MimeMessage mail = new MimeMessage();
+                mail.Subject = textBoxSubject.Text;
+                mail.Body = builder.ToMessageBody();
+            }
+
+            for (int i = 0; i < _emails; i++)
+            {
+                BodyBuilder builder = new BodyBuilder();
+                builder.HtmlBody = listBoxBody.Items[i].ToString();
+
+                //Define the mail headers
+                MimeMessage mail = new MimeMessage();
+                mail.Subject = textBoxSubject.Text;
+                mail.Body = builder.ToMessageBody();
+
+                client.Connect(textBoxSMTP.Text, int.Parse(textBoxPORT.Text), checkBoxSSL.Checked);
+                client.Authenticate(textBoxUSER.Text, textBoxPASSWORD.Text);
+
+                mail.From.Add(new MailboxAddress("rRr", textBoxUSER.Text));
+                mail.To.Add(new MailboxAddress(listBoxEMails.Items[i].ToString()));
+                client.Send(mail);
+
+                client.Disconnect(true);
+            }
+
+            btnExtract.Enabled = true;
+            pictureBoxLoading.Visible = false;
+            #endregion
+
+            MessageBox.Show("Done");
+
         }
     }
 }
