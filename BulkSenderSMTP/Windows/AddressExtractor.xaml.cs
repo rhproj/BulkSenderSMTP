@@ -23,18 +23,7 @@ namespace BulkSenderSMTP.Windows
         public AddressExtractor()
         {
             InitializeComponent();
-            //ComboDelimiterFiller();
         }
-
-        //private void ComboDelimiterFiller()
-        //{
-        //    comboDelimiter.Items.Add("<>");
-        //    comboDelimiter.Items.Add(@"""");
-        //    comboDelimiter.Items.Add("{}");
-        //    comboDelimiter.Items.Add("[]");
-        //    comboDelimiter.Items.Add("()");
-        //}
-
 
 
         private void btnExtract_Click(object sender, RoutedEventArgs e)
@@ -42,11 +31,6 @@ namespace BulkSenderSMTP.Windows
             List<string> mailList = tbRawAddresses.Text.EverythingBetween(tbStartDelim.Text, tbEndDelim.Text);
 
             tbRawAddresses.Text = string.Join(Environment.NewLine,mailList);
-
-            //foreach (var adress in results)
-            //{
-            //    listBoxEMails.Items.Add(adress);
-            //}
         }
     }
 }
