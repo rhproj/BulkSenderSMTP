@@ -80,36 +80,21 @@ namespace BulkSenderSMTP
 
                 //Define the mail headers
                 MimeMessage mail = new MimeMessage();
-                mail.Subject = textBoxSubject.Text;
-                mail.Body = builder.ToMessageBody();
-            }
-
-            for (int i = 0; i < _emails; i++)
-            {
-                BodyBuilder builder = new BodyBuilder();
-                builder.HtmlBody = listBoxBody.Items[i].ToString();
-
-                //Define the mail headers
-                MimeMessage mail = new MimeMessage();
-                mail.Subject = textBoxSubject.Text;
+                mail.Subject = tbSubject.Text;
                 mail.Body = builder.ToMessageBody();
 
-                client.Connect(textBoxSMTP.Text, int.Parse(textBoxPORT.Text), checkBoxSSL.Checked);
-                client.Authenticate(textBoxUSER.Text, textBoxPASSWORD.Text);
+                client.Connect(tbServer.Text, int.Parse(tbPort.Text)); // cbSSL.Checked
+                client.Authenticate(tbLogin.Text, pbPassword.Password);
 
-                mail.From.Add(new MailboxAddress("rRr", textBoxUSER.Text));
-                mail.To.Add(new MailboxAddress(listBoxEMails.Items[i].ToString()));
+                mail.From.Add(new MailboxAddress(tbFrom.Text, tbLogin.Text));
+                mail.To.Add(new MailboxAddress(emailList[i])); //listBoxEMails.Items[i].ToString()));
                 client.Send(mail);
 
                 client.Disconnect(true);
             }
-
-            btnExtract.Enabled = true;
-            pictureBoxLoading.Visible = false;
             #endregion
 
             MessageBox.Show("Done");
-
         }
     }
 }
