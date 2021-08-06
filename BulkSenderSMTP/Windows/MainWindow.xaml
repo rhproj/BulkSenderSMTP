@@ -101,6 +101,9 @@
             </StackPanel>
             <Image x:Name="ImgSend" Grid.Row="1" gif:ImageBehavior.AnimatedSource="\Img\tenor-2.gif" Visibility="Hidden"/>
             <StackPanel Grid.Row="2" VerticalAlignment="Bottom">
+                <Label Content="Progress:" />
+                <Label x:Name="lblProgress" />
+                <Label Content="has been sent"/>
                 <Button x:Name="btn_Send"  VerticalAlignment="Bottom" Content="Send" Click="Send_Click" />
             </StackPanel>
         </Grid>
