@@ -6,7 +6,7 @@ using System.Windows;
 namespace BulkSenderSMTP.Windows
 {
     /// <summary>
-    /// Interaction logic for AddressExtractor.xaml
+    /// Extracts mail addresses striping up raw data source
     /// </summary>
     public partial class AddressExtractor : Window
     {
@@ -14,7 +14,6 @@ namespace BulkSenderSMTP.Windows
         {
             InitializeComponent();
         }
-
 
         private void btnExtract_Click(object sender, RoutedEventArgs e)
         {

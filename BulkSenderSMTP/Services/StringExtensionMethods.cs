@@ -9,6 +9,9 @@ namespace BulkSenderSMTP.Services
 {
     public static class StringExtensionMethods
     {
+        /// <summary>
+        /// Helper method to populate list extracting string values between given characters
+        /// </summary>
         public static List<string> EverythingBetween(this string source, string start, string end)
         {
             var results = new List<string>();

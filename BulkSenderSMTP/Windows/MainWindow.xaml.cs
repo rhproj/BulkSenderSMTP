@@ -1,59 +1,30 @@
-﻿using BulkSenderSMTP.Windows;
-using MailKit.Net.Smtp;
+﻿using BulkSenderSMTP.Services;
+using BulkSenderSMTP.Windows;
 using Microsoft.Win32;
-using MimeKit;
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.IO;
 using System.Text;
 using System.Threading;
 using System.Windows;
+using System.Windows.Input;
 
 namespace BulkSenderSMTP
 {
-    /// <summary>
-    /// Interaction logic for MainWindow.xaml
-    /// </summary>
     public partial class MainWindow : Window
     {
-        List<string> emailList; 
-        List<string> messageList;
-        BackgroundWorker backgroundWorker = new BackgroundWorker();
+        private string letterSubject;
+        private string smtpServer;
+        private int smtpPort;
+        private string userLogin;
+        private string password;
+        private string userName;
+        private List<string> emailList;
+        private List<string> messageList;
 
         public MainWindow()
         {
             InitializeComponent();
-
-            backgroundWorker.DoWork += BackgroundWorker_DoWork;
-            backgroundWorker.ProgressChanged += BackgroundWorker_ProgressChanged;
-            backgroundWorker.RunWorkerCompleted += BackgroundWorker_RunWorkerCompleted;
-
-            backgroundWorker.WorkerReportsProgress = true;
-        }
-
-        private void BackgroundWorker_ProgressChanged(object sender, ProgressChangedEventArgs e)
-        {
-            ImgSend.Visibility = Visibility.Visible;
-            btn_Send.IsEnabled = false;
-
-            lblProgress.Content = e.ProgressPercentage;
-        }
-
-        private void BackgroundWorker_DoWork(object sender, DoWorkEventArgs e)
-        {
-            Dispatcher.Invoke(
-                new Action(() =>
-                {
-                    BulkSend();
-                }));
-        }
-
-        private void BackgroundWorker_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
-        {
-            ImgSend.Visibility = Visibility.Hidden;
-            btn_Send.IsEnabled = true;
-            MessageBox.Show("Done");
         }
 
         private void btn_extractView_Click(object sender, RoutedEventArgs e)
@@ -92,100 +63,42 @@ namespace BulkSenderSMTP
 
         private void Send_Click(object sender, RoutedEventArgs e)
         {
-            #region T T
-            //new Task(BulkSend).Start();
+            MailFieldsInitializer();
 
-            //Thread thread = new Thread(delegate ()
-            //{
-            //    BulkSend();
-            //});
-            //thread.IsBackground = true;
-            //thread.Start(); 
-            #endregion
-
-            if (!backgroundWorker.IsBusy) //если bgW не занят:
+            new Thread(()=> 
             {
-                backgroundWorker.RunWorkerAsync();
-            }
+                Thread.CurrentThread.IsBackground = true;
+                Send();
+            }).Start();
         }
 
-
-        private void BulkSend()
+        private void MailFieldsInitializer()
         {
-            #region wo-BGw
-            //declare the smtp object
-            SmtpClient client = new SmtpClient();
-            client.Timeout = 300000;
-            client.AuthenticationMechanisms.Remove("XOAUTH2");
-
-            BodyBuilder builder = new BodyBuilder(); //Builds HTML body for sending
-                                                     //Define the mail headers
-            MimeMessage mail = new MimeMessage();
-            mail.Subject = tbSubject.Text;
-
-            client.Connect(tbServer.Text, int.Parse(tbPort.Text)); // cbSSL.Checked
-            client.Authenticate(tbLogin.Text, pbPassword.Password);
-
-            for (int i = 0; i < emailList.Count; i++)
-            {
-                builder.HtmlBody = messageList[i].ToString();
-
-                mail.Body = builder.ToMessageBody();
-
-                mail.From.Add(new MailboxAddress(tbFrom.Text, tbLogin.Text));
-                mail.To.Add(new MailboxAddress(emailList[i])); //listBoxEMails.Items[i].ToString()));
-                client.Send(mail);
-
-                backgroundWorker.ReportProgress(i);
-
-                Thread.Sleep(1000); ///TEST
-            }
-
-            client.Disconnect(true);
-            #endregion
+            smtpServer = tbServer.Text;
+            smtpPort = int.Parse(tbPort.Text);
+            userName = tbFrom.Text;
+            userLogin = tbLogin.Text;
+            password = pbPassword.Password;
+            letterSubject = tbSubject.Text;
         }
 
-        //private void BulkSend()
-        //{
-        //    //Dispatcher.BeginInvoke(new Action(() =>
-        //    //{
-        //    //    ImgSend.Visibility = Visibility.Visible;
-        //    //}));
+        private void Send()
+        {
+            Dispatcher.BeginInvoke(new Action(() =>
+            {
+                ImgSend.Visibility = Visibility.Visible;
+                Mouse.OverrideCursor = Cursors.Wait;
+            }));
 
-        //    #region wo-BGw
-        //    //declare the smtp object
-        //    SmtpClient client = new SmtpClient();
-        //    client.Timeout = 300000;
-        //    client.AuthenticationMechanisms.Remove("XOAUTH2");
+            SmtpSender.BulkSend(smtpServer, smtpPort, userName, userLogin, password, letterSubject, emailList, messageList);
 
-        //    BodyBuilder builder = new BodyBuilder(); //Builds HTML body for sending
-        //                                             //Define the mail headers
-        //    MimeMessage mail = new MimeMessage();
-        //    mail.Subject = tbSubject.Text;
+            Dispatcher.BeginInvoke((Action)(() =>
+            {
+                ImgSend.Visibility = Visibility.Hidden;
+                Mouse.OverrideCursor = null;
+            }));
 
-        //    client.Connect(tbServer.Text, int.Parse(tbPort.Text)); // cbSSL.Checked
-        //    client.Authenticate(tbLogin.Text, pbPassword.Password);
-
-        //    for (int i = 0; i < emailList.Count; i++)
-        //    {
-        //        builder.HtmlBody = messageList[i].ToString();
-
-        //        mail.Body = builder.ToMessageBody();
-
-        //        mail.From.Add(new MailboxAddress(tbFrom.Text, tbLogin.Text));
-        //        mail.To.Add(new MailboxAddress(emailList[i])); //listBoxEMails.Items[i].ToString()));
-        //        client.Send(mail);
-
-        //        Thread.Sleep(1000); ///TEST
-        //    }
-
-        //    client.Disconnect(true);
-        //    #endregion
-
-        //    //Dispatcher.BeginInvoke((Action)(() =>
-        //    //{
-        //    //    ImgSend.Visibility = Visibility.Hidden;
-        //    //}));
-        //}
+            MessageBox.Show($"{messageList.Count} e-mails has been sent");
+        }
     }
 }
