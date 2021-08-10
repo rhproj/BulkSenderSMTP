@@ -63,42 +63,70 @@ namespace BulkSenderSMTP
 
         private void Send_Click(object sender, RoutedEventArgs e)
         {
-            MailFieldsInitializer();
-
-            new Thread(()=> 
+            if (MailFieldsInitializer() == false)
             {
-                Thread.CurrentThread.IsBackground = true;
-                Send();
-            }).Start();
+                MessageBox.Show("Please fill in all the required fields");
+                return;
+            }
+            else
+            {
+                new Thread(() =>
+                {
+                    Thread.CurrentThread.IsBackground = true;
+                    Send();
+                }).Start();
+            }
         }
 
-        private void MailFieldsInitializer()
+        private bool MailFieldsInitializer()
         {
-            smtpServer = tbServer.Text;
-            smtpPort = int.Parse(tbPort.Text);
-            userName = tbFrom.Text;
-            userLogin = tbLogin.Text;
-            password = pbPassword.Password;
-            letterSubject = tbSubject.Text;
+            if (!string.IsNullOrWhiteSpace(tbServer.Text) && !string.IsNullOrWhiteSpace(tbPort.Text) && !string.IsNullOrWhiteSpace(tbLogin.Text) && !string.IsNullOrWhiteSpace(pbPassword.Password))
+            {
+                smtpServer = tbServer.Text;
+                smtpPort = int.Parse(tbPort.Text);
+                userName = tbFrom.Text;
+                userLogin = tbLogin.Text;
+                password = pbPassword.Password;
+                letterSubject = tbSubject.Text;
+
+                return true;
+            }
+            else
+            {
+                return false;
+            }
         }
 
         private void Send()
         {
-            Dispatcher.BeginInvoke(new Action(() =>
+            try
             {
-                ImgSend.Visibility = Visibility.Visible;
-                Mouse.OverrideCursor = Cursors.Wait;
-            }));
+                Dispatcher.BeginInvoke(new Action(() =>
+                {
+                    ImgSend.Visibility = Visibility.Visible;
+                    Mouse.OverrideCursor = Cursors.Wait;
+                }));
 
-            SmtpSender.BulkSend(smtpServer, smtpPort, userName, userLogin, password, letterSubject, emailList, messageList);
+                SmtpSender.BulkSend(smtpServer, smtpPort, userName, userLogin, password, letterSubject, emailList, messageList);
 
-            Dispatcher.BeginInvoke((Action)(() =>
+                Dispatcher.BeginInvoke((Action)(() =>
+                {
+                    ImgSend.Visibility = Visibility.Hidden;
+                    Mouse.OverrideCursor = null;
+                }));
+
+                MessageBox.Show($"{messageList.Count} e-mails has been sent");
+            }
+            catch (Exception ex)
             {
-                ImgSend.Visibility = Visibility.Hidden;
-                Mouse.OverrideCursor = null;
-            }));
+                MessageBox.Show(ex.Message);
 
-            MessageBox.Show($"{messageList.Count} e-mails has been sent");
+                Dispatcher.BeginInvoke((Action)(() =>
+                {
+                    ImgSend.Visibility = Visibility.Hidden;
+                    Mouse.OverrideCursor = null;
+                }));
+            }
         }
     }
 }
