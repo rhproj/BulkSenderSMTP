@@ -7,7 +7,7 @@
         mc:Ignorable="d"
         WindowStartupLocation="CenterScreen"
         xmlns:gif="http://wpfanimatedgif.codeplex.com"
-        Title="MainWindow" Height="550" Width="780" Icon="\Img\mail-send.ico">
+        Title="Bulk Mailer" Height="550" Width="780" Icon="\Img\mail-send.ico">
     <Window.Resources>
         <Style TargetType="Button">
             <Setter Property="Margin" Value="5"/>
@@ -15,6 +15,8 @@
             <Setter Property="FontSize" Value="16"/>
             <Setter Property="FontWeight" Value="SemiBold"/>
             <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="BorderThickness" Value="0.5"/>
+            <Setter Property="Background" Value="LightYellow"/>
         </Style>
         <Style TargetType="TextBox">
             <Setter Property="FontSize" Value="13"/>
@@ -26,6 +28,17 @@
             <Setter Property="FontSize" Value="14"/>
             <Setter Property="FontWeight" Value="SemiBold" />
             <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
+        <Style TargetType="ListViewItem">
+            <Style.Triggers>
+                <Trigger Property="ItemsControl.AlternationIndex"  Value="1">
+                    <Setter Property="Background" Value="LightGoldenrodYellow" />
+                </Trigger>
+            </Style.Triggers>
+            <Setter Property="FontSize" Value="14"/>
+         </Style>
+        <Style TargetType="ScrollBar">
+            <Setter Property="Background" Value="White"/>
         </Style>
     </Window.Resources>
     <Grid DockPanel.Dock="Top" >
@@ -68,12 +81,19 @@
                 <RowDefinition Height="40"/>
             </Grid.RowDefinitions>
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="180"/>
+                <!--<ColumnDefinition Width="180"/>-->
                 <ColumnDefinition />
             </Grid.ColumnDefinitions>
-            <ListView x:Name="listVAddress" />
-            <ListView x:Name="listVMessage" Grid.Column="1" Margin="10,0,10,0"/>
-            
+            <ScrollViewer>
+                <Grid >
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="180"/>
+                        <ColumnDefinition />
+                    </Grid.ColumnDefinitions>
+                    <ListView x:Name="listVAddress" AlternationCount="2"/>
+                    <ListView x:Name="listVMessage" Grid.Column="1" Margin="10,0,10,0" AlternationCount="2"/>
+                </Grid>
+            </ScrollViewer>
             <Grid Grid.Row="1" Grid.ColumnSpan="2" Height="45" Margin="0,0,10,0">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="auto"/>

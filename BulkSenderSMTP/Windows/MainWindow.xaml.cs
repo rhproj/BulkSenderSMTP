@@ -6,8 +6,10 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using System.Threading;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
+using System.Linq;
 
 namespace BulkSenderSMTP
 {
@@ -19,8 +21,8 @@ namespace BulkSenderSMTP
         private string userLogin;
         private string password;
         private string userName;
-        private List<string> emailList;
-        private List<string> messageList;
+        private IList<string> emailList;
+        private IList<string> messageList;
 
         public MainWindow()
         {
@@ -70,11 +72,7 @@ namespace BulkSenderSMTP
             }
             else
             {
-                new Thread(() =>
-                {
-                    Thread.CurrentThread.IsBackground = true;
-                    Send();
-                }).Start();
+                Send();
             }
         }
 
@@ -101,21 +99,24 @@ namespace BulkSenderSMTP
         {
             try
             {
-                Dispatcher.BeginInvoke(new Action(() =>
+                Task.Run(() => 
                 {
-                    ImgSend.Visibility = Visibility.Visible;
-                    Mouse.OverrideCursor = Cursors.Wait;
-                }));
+                    Dispatcher.BeginInvoke(new Action(() =>
+                    {
+                        ImgSend.Visibility = Visibility.Visible;
+                        Mouse.OverrideCursor = Cursors.Wait;
+                    }));
 
-                SmtpSender.BulkSend(smtpServer, smtpPort, userName, userLogin, password, letterSubject, emailList, messageList);
+                    SmtpSender.BulkSend(smtpServer, smtpPort, userName, userLogin, password, letterSubject, emailList, messageList);
 
-                Dispatcher.BeginInvoke((Action)(() =>
-                {
-                    ImgSend.Visibility = Visibility.Hidden;
-                    Mouse.OverrideCursor = null;
-                }));
+                    Dispatcher.BeginInvoke((Action)(() =>
+                    {
+                        ImgSend.Visibility = Visibility.Hidden;
+                        Mouse.OverrideCursor = null;
+                    }));
+                    MessageBox.Show($"{messageList.Count} e-mails has been sent");
+                });
 
-                MessageBox.Show($"{messageList.Count} e-mails has been sent");
             }
             catch (Exception ex)
             {
