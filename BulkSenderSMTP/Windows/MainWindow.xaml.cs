@@ -70,13 +70,15 @@ namespace BulkSenderSMTP
             }
             else
             {
-                Send();
+                Task.Run(action: Send);
             }
         }
 
         private bool MailFieldsInitializer()
         {
-            if (!string.IsNullOrWhiteSpace(tbServer.Text) && !string.IsNullOrWhiteSpace(tbPort.Text) && !string.IsNullOrWhiteSpace(tbLogin.Text) && !string.IsNullOrWhiteSpace(pbPassword.Password))
+            if (!string.IsNullOrWhiteSpace(tbServer.Text) && !string.IsNullOrWhiteSpace(tbPort.Text) &&
+                !string.IsNullOrWhiteSpace(tbLogin.Text) && !string.IsNullOrWhiteSpace(pbPassword.Password) &&
+                emailList != null && emailList.Count == messageList.Count)
             {
                 smtpServer = tbServer.Text;
                 smtpPort = int.Parse(tbPort.Text);
@@ -97,24 +99,20 @@ namespace BulkSenderSMTP
         {
             try
             {
-                Task.Run(() => 
+                Dispatcher.BeginInvoke(new Action(() =>
                 {
-                    Dispatcher.BeginInvoke(new Action(() =>
-                    {
-                        ImgSend.Visibility = Visibility.Visible;
-                        Mouse.OverrideCursor = Cursors.Wait;
-                    }));
+                    ImgSend.Visibility = Visibility.Visible;
+                    Mouse.OverrideCursor = Cursors.Wait;
+                }));
 
-                    SmtpSender.BulkSend(smtpServer, smtpPort, userName, userLogin, password, letterSubject, emailList, messageList);
+                SmtpSender.BulkSend(smtpServer, smtpPort, userName, userLogin, password, letterSubject, emailList, messageList);
 
-                    Dispatcher.BeginInvoke((Action)(() =>
-                    {
-                        ImgSend.Visibility = Visibility.Hidden;
-                        Mouse.OverrideCursor = null;
-                    }));
-                    MessageBox.Show($"{messageList.Count} e-mails has been sent");
-                });
-
+                Dispatcher.BeginInvoke((Action)(() =>
+                {
+                    ImgSend.Visibility = Visibility.Hidden;
+                    Mouse.OverrideCursor = null;
+                }));
+                MessageBox.Show($"{messageList.Count} e-mails has been sent");
             }
             catch (Exception ex)
             {
