@@ -61,7 +61,7 @@ namespace BulkSenderSMTP
             }
         }
 
-        private void Send_Click(object sender, RoutedEventArgs e)
+        private async void Send_Click(object sender, RoutedEventArgs e)
         {
             if (MailFieldsInitializer() == false)
             {
@@ -70,7 +70,24 @@ namespace BulkSenderSMTP
             }
             else
             {
-                Task.Run(action: Send);
+                ImgSend.Visibility = Visibility.Visible;
+                Mouse.OverrideCursor = Cursors.Wait;
+
+                await Task.Run(() =>
+                {
+                    try
+                    {
+                        SmtpSender.BulkSend(smtpServer, smtpPort, userName, userLogin, password, letterSubject, emailList, messageList);
+                        MessageBox.Show($"{messageList.Count} e-mails has been sent");
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show(ex.Message);
+                    }                
+                });
+
+                ImgSend.Visibility = Visibility.Hidden;
+                Mouse.OverrideCursor = null;
             }
         }
 
@@ -92,37 +109,6 @@ namespace BulkSenderSMTP
             else
             {
                 return false;
-            }
-        }
-
-        private void Send()
-        {
-            try
-            {
-                Dispatcher.BeginInvoke(new Action(() =>
-                {
-                    ImgSend.Visibility = Visibility.Visible;
-                    Mouse.OverrideCursor = Cursors.Wait;
-                }));
-
-                SmtpSender.BulkSend(smtpServer, smtpPort, userName, userLogin, password, letterSubject, emailList, messageList);
-
-                Dispatcher.BeginInvoke((Action)(() =>
-                {
-                    ImgSend.Visibility = Visibility.Hidden;
-                    Mouse.OverrideCursor = null;
-                }));
-                MessageBox.Show($"{messageList.Count} e-mails has been sent");
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show(ex.Message);
-
-                Dispatcher.BeginInvoke((Action)(() =>
-                {
-                    ImgSend.Visibility = Visibility.Hidden;
-                    Mouse.OverrideCursor = null;
-                }));
             }
         }
     }
