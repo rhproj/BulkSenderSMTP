@@ -75,15 +75,8 @@ namespace BulkSenderSMTP
 
                 await Task.Run(() =>
                 {
-                    try
-                    {
-                        SmtpSender.BulkSend(smtpServer, smtpPort, userName, userLogin, password, letterSubject, emailList, messageList);
-                        MessageBox.Show($"{messageList.Count} e-mails has been sent");
-                    }
-                    catch (Exception ex)
-                    {
-                        MessageBox.Show(ex.Message);
-                    }                
+                    string result = SmtpSender.SendBulk(smtpServer, smtpPort, userName, userLogin, password, letterSubject, emailList, messageList);
+                    MessageBox.Show(result);        
                 });
 
                 ImgSend.Visibility = Visibility.Hidden;
