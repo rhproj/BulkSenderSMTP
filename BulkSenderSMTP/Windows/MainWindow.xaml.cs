@@ -1,8 +1,7 @@
-﻿using BulkSenderSMTP.Services;
+﻿using BulkSenderSMTP.Models;
+using BulkSenderSMTP.Services;
 using BulkSenderSMTP.Windows;
 using Microsoft.Win32;
-using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using System.Threading.Tasks;
@@ -13,18 +12,16 @@ namespace BulkSenderSMTP
 {
     public partial class MainWindow : Window
     {
-        private string letterSubject;
-        private string smtpServer;
-        private int smtpPort;
-        private string userLogin;
-        private string password;
-        private string userName;
-        private IList<string> emailList;
-        private IList<string> messageList;
+        SmtpModel smtp;
+        UserModel user;
+        MailModelDetails mailDetails;
+        MailModelCollections mailCollections;
+        SmtpSender smtpSender;
 
         public MainWindow()
         {
             InitializeComponent();
+            smtpSender = new SmtpSender();
         }
 
         private void btn_extractView_Click(object sender, RoutedEventArgs e)
@@ -37,72 +34,76 @@ namespace BulkSenderSMTP
 
         private void btn_LoadCSV_Click(object sender, RoutedEventArgs e)
         {
-            OpenFileDialog ofd = new OpenFileDialog();
-            ofd.Multiselect = false;
-            ofd.Filter = "csv files (*.csv)|*.csv|All files (*.*)|*.*";
+            mailCollections = new MailModelCollections();
+            OpenFileDialog ofd = SetOpenFileFilter();
 
             if (ofd.ShowDialog() == true)
             {
-                emailList = new List<string>();
-                messageList = new List<string>();
-
                 using (var sR = new StreamReader(ofd.FileName, Encoding.UTF8))
                 {
                     while (!sR.EndOfStream)
                     {
                         string[] valueLine = sR.ReadLine().Split(';');
-                        emailList.Add(valueLine[0]);
-                        messageList.Add(valueLine[1]);
+                        mailCollections.EmailList.Add(valueLine[0]);
+                        mailCollections.MessageList.Add(valueLine[1]);
                     }
 
-                    listVAddress.ItemsSource = emailList;
-                    listVMessage.ItemsSource = messageList;
+                    listVAddress.ItemsSource = mailCollections.EmailList;
+                    listVMessage.ItemsSource = mailCollections.MessageList;
                 }
             }
         }
 
+        private OpenFileDialog SetOpenFileFilter()
+        {
+            OpenFileDialog ofd = new OpenFileDialog();
+            ofd.Multiselect = false;
+            ofd.Filter = "csv files (*.csv)|*.csv|All files (*.*)|*.*";
+            return ofd;
+        }
+
         private async void Send_Click(object sender, RoutedEventArgs e)
         {
-            if (MailFieldsInitializer() == false)
+            if (AreMailModelsSet() == false)
             {
                 MessageBox.Show("Please fill in all the required fields");
                 return;
             }
-            else
+
+            ImgSend.Visibility = Visibility.Visible;
+            Mouse.OverrideCursor = Cursors.Wait;
+
+            await Task.Run(() =>
             {
-                ImgSend.Visibility = Visibility.Visible;
-                Mouse.OverrideCursor = Cursors.Wait;
+                string result = smtpSender.SendEmailsInBulk(smtp,user,mailCollections,mailDetails);
+                MessageBox.Show(result);
+            });
 
-                await Task.Run(() =>
-                {
-                    string result = SmtpSender.SendBulk(smtpServer, smtpPort, userName, userLogin, password, letterSubject, emailList, messageList);
-                    MessageBox.Show(result);        
-                });
-
-                ImgSend.Visibility = Visibility.Hidden;
-                Mouse.OverrideCursor = null;
-            }
+            ImgSend.Visibility = Visibility.Hidden;
+            Mouse.OverrideCursor = null;
         }
 
-        private bool MailFieldsInitializer()
+        private bool AreMailModelsSet()
         {
-            if (!string.IsNullOrWhiteSpace(tbServer.Text) && !string.IsNullOrWhiteSpace(tbPort.Text) &&
-                !string.IsNullOrWhiteSpace(tbLogin.Text) && !string.IsNullOrWhiteSpace(pbPassword.Password) &&
-                emailList != null && emailList.Count == messageList.Count)
+            if (AreMailFieldsFilled())
             {
-                smtpServer = tbServer.Text;
-                smtpPort = int.Parse(tbPort.Text);
-                userName = tbFrom.Text;
-                userLogin = tbLogin.Text;
-                password = pbPassword.Password;
-                letterSubject = tbSubject.Text;
+                smtp = new SmtpModel(tbServer.Text, int.Parse(tbPort.Text));
+                user = new UserModel(tbFrom.Text, tbLogin.Text, pbPassword.Password);
+                mailDetails = new MailModelDetails(tbSubject.Text);
 
                 return true;
             }
-            else
-            {
-                return false;
-            }
+            return false;
+        }
+
+        private bool AreMailFieldsFilled()
+        {
+            return !string.IsNullOrWhiteSpace(tbServer.Text) && 
+                   !string.IsNullOrWhiteSpace(tbPort.Text) &&
+                   !string.IsNullOrWhiteSpace(tbLogin.Text) && 
+                   !string.IsNullOrWhiteSpace(pbPassword.Password) &&
+                   mailCollections.EmailList != null && 
+                   mailCollections.EmailList.Count == mailCollections.MessageList.Count;
         }
     }
 }

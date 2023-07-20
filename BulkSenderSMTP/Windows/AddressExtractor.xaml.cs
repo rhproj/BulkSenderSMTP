@@ -17,7 +17,7 @@ namespace BulkSenderSMTP.Windows
 
         private void btnExtract_Click(object sender, RoutedEventArgs e)
         {
-            List<string> mailList = tbRawAddresses.Text.EverythingBetween(tbStartDelim.Text, tbEndDelim.Text);
+            IEnumerable<string> mailList = tbRawAddresses.Text.TakeStringInBetween(tbStartDelim.Text, tbEndDelim.Text);
 
             tbRawAddresses.Text = string.Join(Environment.NewLine,mailList);
         }

@@ -1,57 +1,65 @@
-﻿using MailKit.Net.Smtp;
+﻿using BulkSenderSMTP.Models;
+using MailKit.Net.Smtp;
 using MimeKit;
 using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
 
 namespace BulkSenderSMTP.Services
 {
-    public static class SmtpSender
+    public class SmtpSender
     {
-        internal static string SendBulk(string smtpServer, int smtpPort, string userName, string login, string password, string letterSubject,
-            IList<string> emailList, IList<string> messageList)
+        private readonly BodyBuilder builder; 
+        private readonly MimeMessage mimeMessage;
+        private readonly SmtpClient client;
+
+        public SmtpSender()
         {
-            //declare the smtp object
-            SmtpClient client = new SmtpClient();
-            client.Timeout = 300000;
-            client.AuthenticationMechanisms.Remove("XOAUTH2");
+            builder = new();
+            mimeMessage = new();
+            client = SetSmtpClient();
+        }
 
-            BodyBuilder builder = new BodyBuilder(); //Builds HTML body for sending
-                                                     //Define the mail headers
-            MimeMessage mail = new MimeMessage();
-            mail.Subject = letterSubject;
-
+        public string SendEmailsInBulk(SmtpModel smtp, UserModel user, MailModelCollections mailCollections, MailModelDetails mailDetails)
+        {
             try
             {
-                client.Connect(smtpServer, smtpPort); // cbSSL.Checked
-                client.Authenticate(login, password);
+                ConnectSmtpClient(smtp, user);
+
+                mimeMessage.Subject = mailDetails.LetterSubject;
+
+                for (int i = 0; i < mailCollections.EmailList.Count; i++)
+                {
+                    builder.HtmlBody = mailCollections.MessageList[i].ToString();
+
+                    mimeMessage.Body = builder.ToMessageBody();
+
+                    mimeMessage.From.Add(new MailboxAddress(user.UserName, user.UserLogin));
+                    mimeMessage.To.Add(new MailboxAddress(mailCollections.EmailList[i]));
+
+                    client.Send(mimeMessage);
+                }
+
+                client.Disconnect(true);
+                return $"{mailCollections.EmailList.Count} e-mails has been sent";
+
             }
             catch (Exception ex)
             {
                 return ex.Message;
             }
+        }
 
-            for (int i = 0; i < emailList.Count; i++)
-            {
-                builder.HtmlBody = messageList[i].ToString();
+        private void ConnectSmtpClient(SmtpModel smtp, UserModel user)
+        {
+            client.Connect(smtp.SmtpServer, smtp.SmtpPort);
+            client.Authenticate(user.UserLogin, user.Password);
+        }
 
-                mail.Body = builder.ToMessageBody();
-
-                mail.From.Add(new MailboxAddress(userName, login));
-                mail.To.Add(new MailboxAddress(emailList[i]));
-
-                try
-                {
-                    client.Send(mail);
-                }
-                catch (Exception ex)
-                {
-                    return ex.Message;
-                }
-            }
-
-            client.Disconnect(true);
-            return $"{emailList.Count} e-mails has been sent";
+        private static SmtpClient SetSmtpClient()
+        {
+            SmtpClient client = new SmtpClient();
+            client.Timeout = 300000;
+            client.AuthenticationMechanisms.Remove("XOAUTH2");
+            return client;
         }
     }
 }
